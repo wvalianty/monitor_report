@@ -1,0 +1,59 @@
+global:
+  resolve_timeout: 5m
+receivers:
+- name: 'dingding.test'
+  webhook_configs:
+  - url: 'http://python-dingding.monitoring.svc:80/?token=abc'
+- name: 'dingding.serverMonitorAlert.xx'
+  webhook_configs:
+  - url: 'http://dingding.monitoring.svc:80/dingtalk/serverMonitorAlert/send'
+    send_resolved: true
+- name: 'dingding.fastsmsProjectProcess.xx'
+  webhook_configs:
+  - url: 'http://dingding.monitoring.svc:80/dingtalk/fastsmsProjectProcess/send'
+    send_resolved: true
+- name: 'dingding.serverMonitorAlert'
+  webhook_configs:
+  - url: 'http://python-dingding.monitoring.svc:80/serverMonitorAlert?token=abc'
+    send_resolved: true
+- name: 'dingding.fastsmsProjectProcess'
+  webhook_configs:
+  - url: 'http://python-dingding.monitoring.svc:80/fastsmsProjectProcess?token=abc'
+    send_resolved: true
+route:
+  receiver: 'dingding.serverMonitorAlert' #default
+  group_wait: 15m
+  group_interval: 1m
+  repeat_interval: 30m
+  continue: false
+  group_by: [alertname,channel]
+  routes:
+  - receiver: 'dingding.serverMonitorAlert'
+    group_wait: 15m
+    group_interval: 1m
+    repeat_interval: 30m
+    group_by: [alertname,channel]   #alertname
+    match:
+      group: serverMonitorAlert
+  - receiver: 'dingding.fastsmsProjectProcess'
+    group_wait: 15m
+    group_interval: 1m
+    repeat_interval: 30m
+    group_by: [alertname,account]   #alertname
+    match:
+      group: fastsmsProjectProcess
+#inhibit_rules:
+#  - source_match:  # 当此告警发生，其他的告警被抑制
+#      severity: 'critical'
+#    target_match:   # 被抑制的对象
+#      severity: 'warning'
+#    equal: ['id', 'instance']
+#inhibit_rules:
+#- inhibit_rule:
+#  target_match:
+#    app: fastsms
+#- inhibit_rule:
+#  source_match:
+#    app: fastsms
+templates:
+- '*.tmpl'
